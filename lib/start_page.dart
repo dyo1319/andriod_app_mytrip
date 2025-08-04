@@ -1,9 +1,9 @@
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:flutter/material.dart';
-import 'pages/ActivitiesPage.dart';
-import 'pages/BudgetPage.dart';
-import 'pages/WeatherPage.dart';
-import 'pages/SummaryPage.dart';
+import 'pages/activities_page.dart';
+import 'pages/budget_page.dart';
+import 'pages/weather_page.dart';
+import 'pages/summary_page.dart';
 
 
 class StartPage extends StatefulWidget {
