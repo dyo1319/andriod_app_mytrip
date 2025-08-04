@@ -32,14 +32,6 @@ class _StartPageState extends State<StartPage> {
         left: false,
         right: false,
         child: Scaffold(
-          appBar: AppBar(
-            backgroundColor: Color(0xFF02F2F6),
-            foregroundColor: Colors.white,
-            title: Text(
-              "Curved Bottom Navigation Bar",
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
           body: _pages[_currentIndex],
           bottomNavigationBar: CurvedNavigationBar(
             color: Colors.teal,

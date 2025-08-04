@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ActivitiesPage extends StatefulWidget {
   const ActivitiesPage({super.key});
@@ -10,8 +12,56 @@ class ActivitiesPage extends StatefulWidget {
 class _ActivitiesPageState extends State<ActivitiesPage> {
   List<Map<String, dynamic>> activities = [];
 
+  @override
+  void initState() {
+    super.initState();
+    _loadActivities();
+  }
+
+  Future<void> _loadActivities() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? data = prefs.getString('activities');
+    if (data != null) {
+      List<dynamic> decoded = jsonDecode(data);
+      setState(() {
+        activities = decoded.map((item) {
+          return {
+            'title': item['title'],
+            'description': item['description'],
+            'date': DateTime.parse(item['date']),
+            'time': TimeOfDay(
+              hour: item['time']['hour'],
+              minute: item['time']['minute'],
+            ),
+            'isDone': item['isDone'],
+          };
+        }).toList();
+      });
+    }
+  }
+
+  Future<void> _saveActivities() async {
+    final prefs = await SharedPreferences.getInstance();
+    String encoded = jsonEncode(
+      activities.map((item) {
+        return {
+          'title': item['title'],
+          'description': item['description'],
+          'date': (item['date'] as DateTime).toIso8601String(),
+          'time': {
+            'hour': (item['time'] as TimeOfDay).hour,
+            'minute': (item['time'] as TimeOfDay).minute,
+          },
+          'isDone': item['isDone'],
+        };
+      }).toList(),
+    );
+    await prefs.setString('activities', encoded);
+  }
+
   void _addActivity() {
     String newTitle = "";
+    String newDescription = "";
     DateTime? selectedDate;
     TimeOfDay? selectedTime;
 
@@ -26,19 +76,25 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // שם פעילות
                     TextField(
                       autofocus: true,
                       decoration: const InputDecoration(
-                        labelText: "שם הפעילות",
+                        labelText: "שם הפעילות *",
                       ),
                       onChanged: (value) {
                         newTitle = value;
                       },
                     ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      decoration: const InputDecoration(
+                        labelText: "תיאור הפעילות (אופציונלי)",
+                      ),
+                      onChanged: (value) {
+                        newDescription = value;
+                      },
+                    ),
                     const SizedBox(height: 16),
-
-                    // בחירת תאריך
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -53,7 +109,7 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                               context: context,
                               initialDate: DateTime.now(),
                               firstDate: DateTime(2020),
-                              lastDate: DateTime(2070),
+                              lastDate: DateTime(2100),
                             );
                             if (date != null) {
                               setDialogState(() {
@@ -65,8 +121,6 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                         ),
                       ],
                     ),
-
-                    // בחירת שעה
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -109,10 +163,14 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                       setState(() {
                         activities.add({
                           'title': newTitle.trim(),
+                          'description': newDescription.trim(),
                           'date': selectedDate,
                           'time': selectedTime,
+                          'isDone': false,
                         });
+                        _sortActivities();
                       });
+                      _saveActivities();
                       Navigator.pop(context);
                     }
                   },
@@ -126,31 +184,117 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
     );
   }
 
+  void _toggleDone(int index, bool? value) {
+    setState(() {
+      activities[index]['isDone'] = value ?? false;
+      _sortActivities();
+    });
+    _saveActivities();
+  }
+
+  void _deleteActivity(int index) {
+    setState(() {
+      activities.removeAt(index);
+    });
+    _saveActivities();
+  }
+
+  void _sortActivities() {
+    activities.sort((a, b) {
+      if (a['isDone'] != b['isDone']) {
+        return a['isDone'] ? 1 : -1;
+      }
+      int dateCompare =
+      (a['date'] as DateTime).compareTo(b['date'] as DateTime);
+      if (dateCompare != 0) return dateCompare;
+      TimeOfDay timeA = a['time'] as TimeOfDay;
+      TimeOfDay timeB = b['time'] as TimeOfDay;
+      int hourCompare = timeA.hour.compareTo(timeB.hour);
+      if (hourCompare != 0) return hourCompare;
+      return timeA.minute.compareTo(timeB.minute);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: activities.isEmpty
           ? const Center(child: Text('אין פעילויות עדיין'))
-          : ListView.builder(
-        itemCount: activities.length,
-        itemBuilder: (context, index) {
-          var activity = activities[index];
-          var date = activity['date'] as DateTime;
-          var time = activity['time'] as TimeOfDay;
+          : SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minWidth: MediaQuery.of(context).size.width,
+          ),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.vertical,
+            child: DataTable(
+              headingRowColor:
+              WidgetStateProperty.all(Colors.teal.shade700),
+              headingTextStyle: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+              dataRowMinHeight: 48,
+              dataRowMaxHeight: 56,
+              columnSpacing: 20,
+              columns: const [
+                DataColumn(label: FittedBox(child: Text("בוצע"))),
+                DataColumn(label: FittedBox(child: Text("שם פעילות"))),
+                DataColumn(label: FittedBox(child: Text("תיאור"))),
+                DataColumn(label: FittedBox(child: Text("תאריך"))),
+                DataColumn(label: FittedBox(child: Text("שעה"))),
+                DataColumn(label: FittedBox(child: Text("מחיקה"))),
+              ],
+              rows: activities.asMap().entries.map((entry) {
+                int index = entry.key;
+                var activity = entry.value;
+                var date = activity['date'] as DateTime;
+                var time = activity['time'] as TimeOfDay;
 
-          return ListTile(
-            leading: const Icon(Icons.event_note),
-            title: Text(activity['title']),
-            subtitle: Text(
-                "${date.day}/${date.month}/${date.year} - ${time.hour}:${time.minute.toString().padLeft(2, '0')}"),
-          );
-        },
+                return DataRow(
+                  color: WidgetStateProperty.all(
+                    activity['isDone']
+                        ? Colors.green.shade50
+                        : (index % 2 == 0
+                        ? Colors.grey.shade100
+                        : Colors.white),
+                  ),
+                  cells: [
+                    DataCell(
+                      Checkbox(
+                        value: activity['isDone'] ?? false,
+                        onChanged: (value) =>
+                            _toggleDone(index, value),
+                      ),
+                    ),
+                    DataCell(FittedBox(child: Text(activity['title']))),
+                    DataCell(FittedBox(
+                        child: Text(activity['description']))),
+                    DataCell(FittedBox(
+                        child: Text(
+                            "${date.day}/${date.month}/${date.year}"))),
+                    DataCell(FittedBox(
+                        child: Text(
+                            "${time.hour}:${time.minute.toString().padLeft(2, '0')}"))),
+                    DataCell(
+                      IconButton(
+                        icon: const Icon(Icons.delete,
+                            color: Colors.red),
+                        onPressed: () => _deleteActivity(index),
+                      ),
+                    ),
+                  ],
+                );
+              }).toList(),
+            ),
+          ),
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addActivity,
         backgroundColor: Colors.teal,
         child: const Icon(Icons.add),
-        tooltip: 'הוסף פעילות',
       ),
     );
   }
