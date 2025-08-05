@@ -65,6 +65,10 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
     DateTime? selectedDate;
     TimeOfDay? selectedTime;
 
+    bool titleError = false;
+    bool dateError = false;
+    bool timeError = false;
+
     showDialog(
       context: context,
       builder: (context) {
@@ -76,16 +80,23 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // שם פעילות
                     TextField(
                       autofocus: true,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: "שם הפעילות *",
+                        errorText: titleError ? "שדה חובה" : null,
                       ),
                       onChanged: (value) {
                         newTitle = value;
+                        setDialogState(() {
+                          titleError = false;
+                        });
                       },
                     ),
                     const SizedBox(height: 12),
+
+                    // תיאור (אופציונלי)
                     TextField(
                       decoration: const InputDecoration(
                         labelText: "תיאור הפעילות (אופציונלי)",
@@ -95,55 +106,62 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                       },
                     ),
                     const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          selectedDate == null
-                              ? "לא נבחר תאריך"
-                              : "${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}",
-                        ),
-                        TextButton(
-                          onPressed: () async {
-                            DateTime? date = await showDatePicker(
-                              context: context,
-                              initialDate: DateTime.now(),
-                              firstDate: DateTime(2020),
-                              lastDate: DateTime(2100),
-                            );
-                            if (date != null) {
-                              setDialogState(() {
-                                selectedDate = date;
-                              });
-                            }
-                          },
-                          child: const Text("בחר תאריך"),
-                        ),
-                      ],
+
+                    // בחירת תאריך
+                    TextField(
+                      readOnly: true,
+                      decoration: InputDecoration(
+                        labelText: "תאריך *",
+                        errorText: dateError ? "חובה לבחור תאריך" : null,
+                        suffixIcon: const Icon(Icons.calendar_today),
+                      ),
+                      controller: TextEditingController(
+                        text: selectedDate == null
+                            ? ""
+                            : "${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}",
+                      ),
+                      onTap: () async {
+                        DateTime? date = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now(),
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime(2100),
+                        );
+                        if (date != null) {
+                          setDialogState(() {
+                            selectedDate = date;
+                            dateError = false;
+                          });
+                        }
+                      },
                     ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          selectedTime == null
-                              ? "לא נבחרה שעה"
-                              : "${selectedTime!.hour}:${selectedTime!.minute.toString().padLeft(2, '0')}",
-                        ),
-                        TextButton(
-                          onPressed: () async {
-                            TimeOfDay? time = await showTimePicker(
-                              context: context,
-                              initialTime: TimeOfDay.now(),
-                            );
-                            if (time != null) {
-                              setDialogState(() {
-                                selectedTime = time;
-                              });
-                            }
-                          },
-                          child: const Text("בחר שעה"),
-                        ),
-                      ],
+                    const SizedBox(height: 12),
+
+                    // בחירת שעה
+                    TextField(
+                      readOnly: true,
+                      decoration: InputDecoration(
+                        labelText: "שעה *",
+                        errorText: timeError ? "חובה לבחור שעה" : null,
+                        suffixIcon: const Icon(Icons.access_time),
+                      ),
+                      controller: TextEditingController(
+                        text: selectedTime == null
+                            ? ""
+                            : "${selectedTime!.hour}:${selectedTime!.minute.toString().padLeft(2, '0')}",
+                      ),
+                      onTap: () async {
+                        TimeOfDay? time = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay.now(),
+                        );
+                        if (time != null) {
+                          setDialogState(() {
+                            selectedTime = time;
+                            timeError = false;
+                          });
+                        }
+                      },
                     ),
                   ],
                 ),
@@ -157,9 +175,13 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                 ),
                 ElevatedButton(
                   onPressed: () {
-                    if (newTitle.trim().isNotEmpty &&
-                        selectedDate != null &&
-                        selectedTime != null) {
+                    setDialogState(() {
+                      titleError = newTitle.trim().isEmpty;
+                      dateError = selectedDate == null;
+                      timeError = selectedTime == null;
+                    });
+
+                    if (!titleError && !dateError && !timeError) {
                       setState(() {
                         activities.add({
                           'title': newTitle.trim(),
