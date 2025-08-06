@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../models/activity_model.dart';
 
 class ActivitiesPage extends StatefulWidget {
   const ActivitiesPage({super.key});
@@ -10,7 +11,7 @@ class ActivitiesPage extends StatefulWidget {
 }
 
 class _ActivitiesPageState extends State<ActivitiesPage> {
-  List<Map<String, dynamic>> activities = [];
+  List<Activity> activities = [];
 
   @override
   void initState() {
@@ -18,46 +19,26 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
     _loadActivities();
   }
 
-  Future<void> _loadActivities() async {
+Future<void> _loadActivities() async {
     final prefs = await SharedPreferences.getInstance();
     String? data = prefs.getString('activities');
     if (data != null) {
       List<dynamic> decoded = jsonDecode(data);
       setState(() {
-        activities = decoded.map((item) {
-          return {
-            'title': item['title'],
-            'description': item['description'],
-            'date': DateTime.parse(item['date']),
-            'time': TimeOfDay(
-              hour: item['time']['hour'],
-              minute: item['time']['minute'],
-            ),
-            'isDone': item['isDone'],
-          };
-        }).toList();
+        activities = decoded.map((item) => Activity.fromJson(item)).toList();
       });
     }
-  }
+}
 
-  Future<void> _saveActivities() async {
+Future<void> _saveActivities() async {
     final prefs = await SharedPreferences.getInstance();
     String encoded = jsonEncode(
-      activities.map((item) {
-        return {
-          'title': item['title'],
-          'description': item['description'],
-          'date': (item['date'] as DateTime).toIso8601String(),
-          'time': {
-            'hour': (item['time'] as TimeOfDay).hour,
-            'minute': (item['time'] as TimeOfDay).minute,
-          },
-          'isDone': item['isDone'],
-        };
-      }).toList(),
+      activities.map((activity) => activity.toJson()).toList(),
     );
     await prefs.setString('activities', encoded);
-  }
+}
+
+
 
   void _addActivity() {
     String newTitle = "";
@@ -185,13 +166,15 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
 
                     if (!titleError && !dateError && !timeError) {
                       setState(() {
-                        activities.add({
-                          'title': newTitle.trim(),
-                          'description': newDescription.trim(),
-                          'date': selectedDate,
-                          'time': selectedTime,
-                          'isDone': false,
-                        });
+                        activities.add(
+                          Activity(
+                            title: newTitle.trim(),
+                            description: newDescription.trim(),
+                            date: selectedDate!,
+                            time: selectedTime!,
+                            isDone: false,
+                          ),
+                        );
                         _sortActivities();
                       });
                       _saveActivities();
@@ -210,7 +193,7 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
 
   void _toggleDone(int index, bool? value) {
     setState(() {
-      activities[index]['isDone'] = value ?? false;
+      activities[index].isDone = value ?? false;
       _sortActivities();
     });
     _saveActivities();
@@ -225,14 +208,13 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
 
   void _sortActivities() {
     activities.sort((a, b) {
-      if (a['isDone'] != b['isDone']) {
-        return a['isDone'] ? 1 : -1;
+      if (a.isDone != b.isDone) {
+        return a.isDone ? 1 : -1;
       }
-      int dateCompare =
-      (a['date'] as DateTime).compareTo(b['date'] as DateTime);
+      int dateCompare = a.date.compareTo(b.date);
       if (dateCompare != 0) return dateCompare;
-      TimeOfDay timeA = a['time'] as TimeOfDay;
-      TimeOfDay timeB = b['time'] as TimeOfDay;
+      TimeOfDay timeA = a.time;
+      TimeOfDay timeB = b.time;
       int hourCompare = timeA.hour.compareTo(timeB.hour);
       if (hourCompare != 0) return hourCompare;
       return timeA.minute.compareTo(timeB.minute);
@@ -273,23 +255,23 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
               rows: activities.asMap().entries.map((entry) {
                 int index = entry.key;
                 var activity = entry.value;
-                var date = activity['date'] as DateTime;
-                var time = activity['time'] as TimeOfDay;
+                var date = activity.date;
+                var time = activity.time;
 
                 return DataRow(
                   color: WidgetStateProperty.all(
-                    activity['isDone']
-                        ? Colors.green.shade50
-                        : (index % 2 == 0
-                        ? Colors.grey.shade100
-                        : Colors.white),
+                      activity.isDone
+                          ? Colors.green.shade50
+                          : (index % 2 == 0
+                          ? Colors.grey.shade100
+                          : Colors.white),
                   ),
                   cells: [
                     // בוצע
                     DataCell(
                       Checkbox(
-                        value: activity['isDone'] ?? false,
-                        onChanged: (value) => _toggleDone(index, value),
+                        value: activity.isDone,
+                    onChanged: (value) => _toggleDone(index, value),
                       ),
                     ),
                     // שם פעילות
@@ -297,7 +279,7 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                       SizedBox(
                         width: 150,
                         child: Text(
-                          activity['title'],
+                          activity.title,
                           overflow: TextOverflow.ellipsis,
                           maxLines: 1,
                         ),
@@ -308,7 +290,7 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                       SizedBox(
                         width: 200,
                         child: Text(
-                          activity['description'],
+                          activity.description ?? "",
                           overflow: TextOverflow.ellipsis,
                           maxLines: 2,
                           softWrap: true,
