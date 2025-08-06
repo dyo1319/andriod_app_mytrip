@@ -258,11 +258,13 @@ Future<void> _saveActivities() async {
 
                 return DataRow(
                   color: WidgetStateProperty.all(
-                      activity.isDone
-                          ? Colors.green.shade50
-                          : (index % 2 == 0
-                          ? Colors.grey.shade100
-                          : Colors.white),
+                    activity.isDone
+                        ? Colors.green.shade50
+                        : activity.isPast
+                        ? Colors.red.shade50
+                        : (index % 2 == 0
+                        ? Colors.grey.shade100
+                        : Colors.white),
                   ),
                   cells: [
                     // בוצע
