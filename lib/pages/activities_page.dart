@@ -281,7 +281,10 @@ Future<void> _saveActivities() async {
                         child: Row(
                           children: [
                             if (activity.isPast && !activity.isDone) ...[
-                              const Icon(Icons.access_time, size: 16, color: Colors.red),
+                              Tooltip(
+                                message: "הפעילות כבר עברה",
+                                child: const Icon(Icons.access_time, size: 16, color: Colors.red),
+                              ),
                               const SizedBox(width: 4),
                             ],
                             Expanded(
