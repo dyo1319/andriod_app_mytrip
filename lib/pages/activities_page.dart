@@ -255,8 +255,6 @@ Future<void> _saveActivities() async {
               rows: activities.asMap().entries.map((entry) {
                 int index = entry.key;
                 var activity = entry.value;
-                var date = activity.date;
-                var time = activity.time;
 
                 return DataRow(
                   color: WidgetStateProperty.all(
@@ -271,7 +269,7 @@ Future<void> _saveActivities() async {
                     DataCell(
                       Checkbox(
                         value: activity.isDone,
-                    onChanged: (value) => _toggleDone(index, value),
+                        onChanged: (value) => _toggleDone(index, value),
                       ),
                     ),
                     // שם פעילות
@@ -298,11 +296,9 @@ Future<void> _saveActivities() async {
                       ),
                     ),
                     // תאריך
-                    DataCell(Text(
-                        "${date.day}/${date.month}/${date.year}")),
+                    DataCell(Text(activity.formattedDate)),
                     // שעה
-                    DataCell(Text(
-                        "${time.hour}:${time.minute.toString().padLeft(2, '0')}")),
+                    DataCell(Text(activity.formattedTime)),
                     // מחיקה
                     DataCell(
                       IconButton(

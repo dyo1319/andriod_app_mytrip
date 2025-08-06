@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:intl/intl.dart';
 
 class Activity {
   String title;
@@ -38,6 +38,17 @@ class Activity {
         ),
       isDone: json['isDone'] ?? false,
     );
+  }
+
+  String get formattedDate => DateFormat('dd/MM/yyyy').format(date);
+
+  String get formattedTime =>
+      "${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}";
+
+  bool get isPast {
+    final activityDateTime =
+    DateTime(date.year, date.month, date.day, time.hour, time.minute);
+    return DateTime.now().isAfter(activityDateTime);
   }
 
 }
