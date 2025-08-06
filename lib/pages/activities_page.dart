@@ -278,10 +278,20 @@ Future<void> _saveActivities() async {
                     DataCell(
                       SizedBox(
                         width: 150,
-                        child: Text(
-                          activity.title,
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
+                        child: Row(
+                          children: [
+                            if (activity.isPast && !activity.isDone) ...[
+                              const Icon(Icons.access_time, size: 16, color: Colors.red),
+                              const SizedBox(width: 4),
+                            ],
+                            Expanded(
+                              child: Text(
+                                activity.title,
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
