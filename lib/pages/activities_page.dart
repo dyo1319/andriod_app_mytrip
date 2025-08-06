@@ -96,10 +96,12 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                     ),
                     const SizedBox(height: 12),
 
-                    // תיאור (אופציונלי)
+                    // תיאור (אופציונלי) עם מגבלת תווים
                     TextField(
+                      maxLength: 200,
                       decoration: const InputDecoration(
                         labelText: "תיאור הפעילות (אופציונלי)",
+                        counterText: "", // מסתיר את המונה אם לא רוצים להציג
                       ),
                       onChanged: (value) {
                         newDescription = value;
@@ -283,26 +285,46 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                         : Colors.white),
                   ),
                   cells: [
+                    // בוצע
                     DataCell(
                       Checkbox(
                         value: activity['isDone'] ?? false,
-                        onChanged: (value) =>
-                            _toggleDone(index, value),
+                        onChanged: (value) => _toggleDone(index, value),
                       ),
                     ),
-                    DataCell(FittedBox(child: Text(activity['title']))),
-                    DataCell(FittedBox(
-                        child: Text(activity['description']))),
-                    DataCell(FittedBox(
+                    // שם פעילות
+                    DataCell(
+                      SizedBox(
+                        width: 150,
                         child: Text(
-                            "${date.day}/${date.month}/${date.year}"))),
-                    DataCell(FittedBox(
+                          activity['title'],
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
+                    ),
+                    // תיאור
+                    DataCell(
+                      SizedBox(
+                        width: 200,
                         child: Text(
-                            "${time.hour}:${time.minute.toString().padLeft(2, '0')}"))),
+                          activity['description'],
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
+                          softWrap: true,
+                        ),
+                      ),
+                    ),
+                    // תאריך
+                    DataCell(Text(
+                        "${date.day}/${date.month}/${date.year}")),
+                    // שעה
+                    DataCell(Text(
+                        "${time.hour}:${time.minute.toString().padLeft(2, '0')}")),
+                    // מחיקה
                     DataCell(
                       IconButton(
-                        icon: const Icon(Icons.delete,
-                            color: Colors.red),
+                        icon: const Icon(Icons.delete, color: Colors.red),
                         onPressed: () => _deleteActivity(index),
                       ),
                     ),
