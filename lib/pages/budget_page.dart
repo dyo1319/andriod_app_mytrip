@@ -120,8 +120,110 @@ class _BudgetPageState extends State<BudgetPage> {
 
 
   void _addExpense(int categoryId) {
-    // כאן יופיע טופס להוספת הוצאה לקטגוריה מסוימת
+    String description = "";
+    String amountStr = "";
+    DateTime selectedDate = DateTime.now();
+
+    bool amountError = false;
+    bool dateError = false;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text("הוסף הוצאה"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: "סכום *",
+                      errorText: amountError ? "שדה חובה / לא תקין" : null,
+                    ),
+                    onChanged: (val) {
+                      amountStr = val;
+                      if (amountError) {
+                        setDialogState(() => amountError = false);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    decoration: const InputDecoration(
+                      labelText: "תיאור (אופציונלי)",
+                    ),
+                    onChanged: (val) {
+                      description = val;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    readOnly: true,
+                    controller: TextEditingController(
+                      text:"${selectedDate.day}/${selectedDate.month}/${selectedDate.year}",
+                    ),
+                    decoration: InputDecoration(
+                      labelText: "תאריך *",
+                      suffixIcon: const Icon(Icons.calendar_today),
+                      errorText: dateError ? "חובה לבחור תאריך" : null,
+                    ),
+                    onTap: () async {
+                      DateTime? picked = await showDatePicker(
+                        context: context,
+                        initialDate: selectedDate,
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2100),
+                      );
+                      if (picked != null) {
+                        setDialogState(() {
+                          selectedDate = picked;
+                          dateError = false;
+                        });
+                      }
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("ביטול"),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    final parsedAmount = double.tryParse(amountStr);
+                    setDialogState(() {
+                      amountError = parsedAmount == null || parsedAmount <= 0;
+                    });
+
+                    if (!amountError && !dateError) {
+                      setState(() {
+                        expenses.add(
+                          Expense(
+                            id: DateTime.now().millisecondsSinceEpoch,
+                            categoryId: categoryId,
+                            amount: parsedAmount!,
+                            description: description.trim(),
+                            date: selectedDate,
+                          ),
+                        );
+                      });
+                      Navigator.pop(context);
+                    }
+                  },
+                  child: const Text("שמור"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
+
 
   @override
   Widget build(BuildContext context) {
