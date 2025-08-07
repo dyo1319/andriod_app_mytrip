@@ -1,10 +1,9 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/category_model.dart';
 import '../models/expense_model.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
+import '../pages/categoryexpenses_page.dart';
 
 class BudgetPage extends StatefulWidget {
   const BudgetPage({super.key});
@@ -43,7 +42,19 @@ class _BudgetPageState extends State<BudgetPage> {
           .toList();
     }
 
-    setState(() {});
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _saveData() async {
+    final prefs = await SharedPreferences.getInstance();
+    String encodedCategories = jsonEncode(
+      categories.map((c) => c.toJson()).toList(),
+    );
+    String encodedExpenses = jsonEncode(
+      expenses.map((e) => e.toJson()).toList(),
+    );
+    await prefs.setString('categories', encodedCategories);
+    await prefs.setString('expenses', encodedExpenses);
   }
 
   double _sumExpensesForCategory(int categoryId) {
@@ -119,9 +130,8 @@ class _BudgetPageState extends State<BudgetPage> {
                         categories.add(newCategory);
                       });
 
-                      final navigator = Navigator.of(context); // ✅ שמור לפני await
+                      Navigator.pop(context);
                       await _saveData();
-                      navigator.pop(); // ✅ בטוח
                     }
                   },
                   child: const Text("שמור"),
@@ -227,9 +237,8 @@ class _BudgetPageState extends State<BudgetPage> {
                         );
                       });
 
-                      final navigator = Navigator.of(context); // ✅ לפני await
+                      Navigator.pop(context);
                       await _saveData();
-                      navigator.pop(); // ✅ בטוח
                     }
                   },
                   child: const Text("שמור"),
@@ -242,18 +251,6 @@ class _BudgetPageState extends State<BudgetPage> {
     );
   }
 
-  Future<void> _saveData() async {
-    final prefs = await SharedPreferences.getInstance();
-    String encodedCategories = jsonEncode(
-      categories.map((c) => c.toJson()).toList(),
-    );
-    String encodedExpenses = jsonEncode(
-      expenses.map((e) => e.toJson()).toList(),
-    );
-    await prefs.setString('categories', encodedCategories);
-    await prefs.setString('expenses', encodedExpenses);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -263,12 +260,39 @@ class _BudgetPageState extends State<BudgetPage> {
         itemBuilder: (context, index) {
           final category = categories[index];
           final totalSpent = _sumExpensesForCategory(category.id);
+          final expenseCount = expenses.where((e) => e.categoryId == category.id).length;
+
           return Card(
             margin: const EdgeInsets.all(8),
             child: ListTile(
+              onTap: () {
+                final categoryExpenses = expenses
+                    .where((e) => e.categoryId == category.id)
+                    .toList();
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => CategoryExpensesPage(
+                      categoryName: category.name,
+                      expenses: categoryExpenses,
+                      onDelete: (expenseId) async {
+                        setState(() {
+                          expenses.removeWhere((e) => e.id == expenseId);
+                        });
+                        Navigator.pop(context);
+                        await _saveData();
+                      },
+                    ),
+                  ),
+                );
+              },
               title: Text(category.name),
-              subtitle: Text("מתוכנן: ₪${category.plannedBudget.toStringAsFixed(0)}"
-                  "\nהוצאות בפועל: ₪${totalSpent.toStringAsFixed(0)}"),
+              subtitle: Text(
+                "מתוכנן: ₪${category.plannedBudget.toStringAsFixed(0)}"
+                    "\nהוצאות בפועל: ₪${totalSpent.toStringAsFixed(0)}"
+                    "\n📄 סה\"כ הוצאות: $expenseCount",
+              ),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
