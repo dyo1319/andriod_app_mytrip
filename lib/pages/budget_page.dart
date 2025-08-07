@@ -20,7 +20,7 @@ class _BudgetPageState extends State<BudgetPage> {
   @override
   void initState() {
     super.initState();
-    _loadData(); // בעתיד נטען מ־SharedPreferences
+    _loadData();
   }
 
   Future<void> _loadData() async {
@@ -269,10 +269,26 @@ class _BudgetPageState extends State<BudgetPage> {
               title: Text(category.name),
               subtitle: Text("מתוכנן: ₪${category.plannedBudget.toStringAsFixed(0)}"
                   "\nהוצאות בפועל: ₪${totalSpent.toStringAsFixed(0)}"),
-              trailing: IconButton(
-                icon: const Icon(Icons.add),
-                onPressed: () => _addExpense(category.id),
-                tooltip: "הוסף הוצאה",
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.add),
+                    onPressed: () => _addExpense(category.id),
+                    tooltip: "הוסף הוצאה",
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    tooltip: "מחק קטגוריה",
+                    onPressed: () async {
+                      setState(() {
+                        expenses.removeWhere((e) => e.categoryId == category.id);
+                        categories.removeAt(index);
+                      });
+                      await _saveData();
+                    },
+                  ),
+                ],
               ),
             ),
           );
