@@ -1,6 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import '../models/category_model.dart';
 import '../models/expense_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 class BudgetPage extends StatefulWidget {
   const BudgetPage({super.key});
@@ -19,18 +23,27 @@ class _BudgetPageState extends State<BudgetPage> {
     _loadData(); // בעתיד נטען מ־SharedPreferences
   }
 
-  void _loadData() {
-    // לדוגמה בלבד: נטען קטגוריות והוצאות מזויפות כדי להציג UI
-    categories = [
-      Category(id: 1, name: "טיסות", plannedBudget: 3000),
-      Category(id: 2, name: "מלון", plannedBudget: 2500),
-    ];
+  Future<void> _loadData() async {
+    final prefs = await SharedPreferences.getInstance();
 
-    expenses = [
-      Expense(id: 1, categoryId: 1, amount: 1500, description: "טיסה הלוך", date: DateTime.now()),
-      Expense(id: 2, categoryId: 1, amount: 1200, description: "טיסה חזור", date: DateTime.now()),
-      Expense(id: 3, categoryId: 2, amount: 2200, description: "מלון תל אביב", date: DateTime.now()),
-    ];
+    final catData = prefs.getString('categories');
+    final expData = prefs.getString('expenses');
+
+    if (catData != null) {
+      final decoded = jsonDecode(catData);
+      categories = List<Map<String, dynamic>>.from(decoded)
+          .map((item) => Category.fromJson(item))
+          .toList();
+    }
+
+    if (expData != null) {
+      final decoded = jsonDecode(expData);
+      expenses = List<Map<String, dynamic>>.from(decoded)
+          .map((item) => Expense.fromJson(item))
+          .toList();
+    }
+
+    setState(() {});
   }
 
   double _sumExpensesForCategory(int categoryId) {
@@ -89,7 +102,7 @@ class _BudgetPageState extends State<BudgetPage> {
                   child: const Text("ביטול"),
                 ),
                 ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     final parsedBudget = double.tryParse(budgetStr);
                     setStateDialog(() {
                       nameError = name.trim().isEmpty;
@@ -105,7 +118,10 @@ class _BudgetPageState extends State<BudgetPage> {
                         );
                         categories.add(newCategory);
                       });
-                      Navigator.pop(context);
+
+                      final navigator = Navigator.of(context); // ✅ שמור לפני await
+                      await _saveData();
+                      navigator.pop(); // ✅ בטוח
                     }
                   },
                   child: const Text("שמור"),
@@ -117,7 +133,6 @@ class _BudgetPageState extends State<BudgetPage> {
       },
     );
   }
-
 
   void _addExpense(int categoryId) {
     String description = "";
@@ -163,7 +178,7 @@ class _BudgetPageState extends State<BudgetPage> {
                   TextField(
                     readOnly: true,
                     controller: TextEditingController(
-                      text:"${selectedDate.day}/${selectedDate.month}/${selectedDate.year}",
+                      text: "${selectedDate.day}/${selectedDate.month}/${selectedDate.year}",
                     ),
                     decoration: InputDecoration(
                       labelText: "תאריך *",
@@ -193,7 +208,7 @@ class _BudgetPageState extends State<BudgetPage> {
                   child: const Text("ביטול"),
                 ),
                 ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     final parsedAmount = double.tryParse(amountStr);
                     setDialogState(() {
                       amountError = parsedAmount == null || parsedAmount <= 0;
@@ -211,7 +226,10 @@ class _BudgetPageState extends State<BudgetPage> {
                           ),
                         );
                       });
-                      Navigator.pop(context);
+
+                      final navigator = Navigator.of(context); // ✅ לפני await
+                      await _saveData();
+                      navigator.pop(); // ✅ בטוח
                     }
                   },
                   child: const Text("שמור"),
@@ -224,6 +242,17 @@ class _BudgetPageState extends State<BudgetPage> {
     );
   }
 
+  Future<void> _saveData() async {
+    final prefs = await SharedPreferences.getInstance();
+    String encodedCategories = jsonEncode(
+      categories.map((c) => c.toJson()).toList(),
+    );
+    String encodedExpenses = jsonEncode(
+      expenses.map((e) => e.toJson()).toList(),
+    );
+    await prefs.setString('categories', encodedCategories);
+    await prefs.setString('expenses', encodedExpenses);
+  }
 
   @override
   Widget build(BuildContext context) {
