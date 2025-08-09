@@ -5,7 +5,9 @@ import '../models/activity_model.dart';
 import 'activity_details_page.dart';
 
 class ActivitiesPage extends StatefulWidget {
-  const ActivitiesPage({super.key});
+  final VoidCallback? onDataChanged;
+
+  const ActivitiesPage({super.key, this.onDataChanged});
 
   @override
   State<ActivitiesPage> createState() => _ActivitiesPageState();
@@ -37,6 +39,11 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
       activities.map((activity) => activity.toJson()).toList(),
     );
     await prefs.setString('activities', encoded);
+
+    // עדכון דף הסיכום
+    if (widget.onDataChanged != null) {
+      widget.onDataChanged!();
+    }
   }
 
   void _addActivity() {

@@ -83,11 +83,6 @@ class _WeatherPageState extends State<WeatherPage>
       );
 
       final response = await http.get(url);
-
-      print('API URL: $url');
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
-
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
@@ -442,7 +437,7 @@ class _WeatherPageState extends State<WeatherPage>
                         Column(
                           children: [
                             Text(
-                              '${temperature}°',
+                              '$temperature°',
                               style: TextStyle(
                                 fontSize: 64,
                                 fontWeight: FontWeight.w300,
@@ -519,7 +514,7 @@ class _WeatherPageState extends State<WeatherPage>
                           child: _buildWeatherDetail(
                             Icons.thermostat,
                             'מרגיש כמו',
-                            '${feelsLike}°C',
+                            '$feelsLike°C',
                             Colors.orange,
                           ),
                         ),
@@ -527,7 +522,7 @@ class _WeatherPageState extends State<WeatherPage>
                           child: _buildWeatherDetail(
                             Icons.water_drop,
                             'לחות',
-                            '${humidity}%',
+                            '$humidity%',
                             Colors.blue,
                           ),
                         ),
@@ -535,7 +530,7 @@ class _WeatherPageState extends State<WeatherPage>
                           child: _buildWeatherDetail(
                             Icons.air,
                             'רוח',
-                            '${windSpeed} מ/ש',
+                            '$windSpeed מ/ש',
                             Colors.green,
                           ),
                         ),

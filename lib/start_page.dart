@@ -14,13 +14,26 @@ class StartPage extends StatefulWidget {
 
 class _StartPageState extends State<StartPage> {
   int _currentIndex = 0;
+  final GlobalKey<SummaryPageState> _summaryPageKey = GlobalKey<SummaryPageState>();
 
-  final List<Widget> _pages = const [
-    ActivitiesPage(),
-    BudgetPage(),
-    WeatherPage(),
-    SummaryPage(),
-  ];
+  late List<Widget> _pages;
+
+  @override
+  void initState() {
+    super.initState();
+    _pages = [
+      ActivitiesPage(onDataChanged: _onDataChanged),
+      BudgetPage(onDataChanged: _onDataChanged),
+      const WeatherPage(),
+      SummaryPage(key: _summaryPageKey),
+    ];
+  }
+
+  void _onDataChanged() {
+    if (_summaryPageKey.currentState != null) {
+      _summaryPageKey.currentState!.refreshData();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,18 +47,15 @@ class _StartPageState extends State<StartPage> {
             children: _pages,
           ),
 
-
           bottomNavigationBar: CurvedNavigationBar(
             color: Colors.teal,
             buttonBackgroundColor: Colors.teal,
             backgroundColor: Colors.transparent,
             onTap: (value) {
-
               int reversedIndex = 3 - value;
               setState(() => _currentIndex = reversedIndex);
             },
             items: [
-
               Icon(_currentIndex == 3 ? Icons.pie_chart : Icons.pie_chart_outline_outlined, size: 30, color: Colors.white),
               Icon(_currentIndex == 2 ? Icons.cloud : Icons.cloud_outlined, size: 30, color: Colors.white),
               Icon(_currentIndex == 1 ? Icons.attach_money : Icons.attach_money_outlined, size: 30, color: Colors.white),
