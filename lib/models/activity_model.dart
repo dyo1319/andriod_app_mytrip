@@ -9,11 +9,11 @@ class Activity {
   bool isDone;
 
   Activity({
-      required this.title,
-      this.description,
-      required this.date,
-      required this.time,
-      this.isDone = false,
+    required this.title,
+    this.description,
+    required this.date,
+    required this.time,
+    this.isDone = false,
   });
 
   Map<String, dynamic> toJson() => {
@@ -29,13 +29,13 @@ class Activity {
 
   factory Activity.fromJson(Map<String, dynamic> json) {
     return Activity(
-        title: json['title'],
-        description: json['description'],
-        date: DateTime.parse(json['date']),
-        time: TimeOfDay(
-            hour: json['time']['hour'],
-            minute: json['time']['minute'],
-        ),
+      title: json['title'],
+      description: json['description'],
+      date: DateTime.parse(json['date']),
+      time: TimeOfDay(
+        hour: json['time']['hour'],
+        minute: json['time']['minute'],
+      ),
       isDone: json['isDone'] ?? false,
     );
   }

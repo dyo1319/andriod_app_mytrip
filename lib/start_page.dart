@@ -25,7 +25,7 @@ class _StartPageState extends State<StartPage> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFF02F2F6),
+      color: Colors.teal,
       child: SafeArea(
         top: false, left: false, right: false,
         child: Scaffold(
@@ -33,16 +33,23 @@ class _StartPageState extends State<StartPage> {
             index: _currentIndex,
             children: _pages,
           ),
+
+
           bottomNavigationBar: CurvedNavigationBar(
             color: Colors.teal,
             buttonBackgroundColor: Colors.teal,
             backgroundColor: Colors.transparent,
-            onTap: (value) => setState(() => _currentIndex = value),
+            onTap: (value) {
+
+              int reversedIndex = 3 - value;
+              setState(() => _currentIndex = reversedIndex);
+            },
             items: [
-              Icon(_currentIndex == 0 ? Icons.event : Icons.event_outlined, size: 30, color: Colors.white),
-              Icon(_currentIndex == 1 ? Icons.attach_money : Icons.attach_money_outlined, size: 30, color: Colors.white),
-              Icon(_currentIndex == 2 ? Icons.cloud : Icons.cloud_outlined, size: 30, color: Colors.white),
+
               Icon(_currentIndex == 3 ? Icons.pie_chart : Icons.pie_chart_outline_outlined, size: 30, color: Colors.white),
+              Icon(_currentIndex == 2 ? Icons.cloud : Icons.cloud_outlined, size: 30, color: Colors.white),
+              Icon(_currentIndex == 1 ? Icons.attach_money : Icons.attach_money_outlined, size: 30, color: Colors.white),
+              Icon(_currentIndex == 0 ? Icons.event : Icons.event_outlined, size: 30, color: Colors.white),
             ],
           ),
         ),
