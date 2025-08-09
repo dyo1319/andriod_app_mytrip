@@ -534,6 +534,7 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
       floatingActionButton: SafeArea(
         minimum: const EdgeInsets.only(bottom: 30),
         child: FloatingActionButton(
+          heroTag: 'fab_activities',
           onPressed: _addActivity,
           backgroundColor: Colors.teal,
           child: const Icon(Icons.add),

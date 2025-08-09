@@ -325,6 +325,7 @@ class _BudgetPageState extends State<BudgetPage> {
       floatingActionButton: SafeArea(
         minimum: const EdgeInsets.only(bottom: 30),
         child: FloatingActionButton(
+          heroTag: 'fab_budget',
           onPressed: _addCategory,
           backgroundColor: Colors.teal,
           child: const Icon(Icons.add),

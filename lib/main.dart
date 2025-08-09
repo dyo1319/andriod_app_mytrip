@@ -1,24 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'start_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MyApp());
+  runApp(const MyTripApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MyTripApp extends StatelessWidget {
+  const MyTripApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'MyTrip',
       debugShowCheckedModeBanner: false,
-      locale: const Locale('he', 'IL'),
+      locale: const Locale('he'),
+      supportedLocales: const [Locale('he'), Locale('en')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
+
+      // הוספה:
+      builder: (context, child) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: child!,
+      ),
+
       theme: ThemeData(
         useMaterial3: true,
-        colorSchemeSeed: Colors.teal,
-        fontFamily: 'Rubik',
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
       ),
       home: const StartPage(),
     );
